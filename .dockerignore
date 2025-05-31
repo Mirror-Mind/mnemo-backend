@@ -1,0 +1,67 @@
+# Python cache files
+__pycache__/
+**/__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv/
+.env*
+!.env.example
+
+# Development and IDE files
+.git
+.gitignore
+.idea/
+.vscode/
+.cursor/
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+
+# Logs and temporary files
+logs/
+*.log
+dump.rdb
+
+# System files
+.DS_Store
+**/.DS_Store
+
+# Documentation and non-essential files
+README.md
+LICENSE
+org_context_guidelines.md
+prometheus_metrics_queries.md
+
+# Generated files
+agents/workflows/*/*.png
+# Exclude specific CSV files that aren't needed in production
+# If some CSV files are required by the application, list only the ones to exclude
+# or comment out the next line
+# *.csv
+
+# Docker-specific files
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Test files
+tests/
+pytest.ini
+.pytest_cache/
+
+# Development scripts and docs
+deploy.sh
+DEPLOYMENT.md
+TODOS
+
+# Keep entrypoint script
+!docker-entrypoint.sh

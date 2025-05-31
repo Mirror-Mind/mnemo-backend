@@ -1,0 +1,50 @@
+services:
+  orbia-backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: orbia-backend
+    image: orbia:latest
+    ports:
+      - "8090:8000"
+    volumes:
+      - ./logs:/app/logs
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=production
+      - HOME=/home/appuser
+      - MEM0_DIR=/app/.mem0
+      - TMPDIR=/tmp
+      - PYTHONPATH=/app
+      - DATABASE_URL=postgresql://orbia:orbia_password@postgres:5432/orbia_db
+      - REDIS_URL=redis://redis:6379
+      - USE_REDIS_MEM0=true
+      - MEM0_COLLECTION_NAME=orbia_memories
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/_Health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - orbia-network
+    # Resource limits for better performance
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '0.5'
+        reservations:
+          memory: 512M
+          cpus: '0.25'
+
+volumes:
+  orbia-logs:
+    driver: local
+      
+networks:
+  orbia-network:
+    external: true
+    name: orbia_orbia-network 

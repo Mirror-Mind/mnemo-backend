@@ -1,0 +1,14 @@
+__pycache__/
+.env
+tenantConfig.yml
+logs.json
+agents/evals/results/
+logs/*.log
+logs/*.log.*
+.idea/*
+**/.DS_Store
+.DS_Store
+agents/workflows/*/*.png
+logs/image_gen
+logs/actions
+.cursor/*

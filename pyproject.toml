@@ -1,0 +1,96 @@
+[project]
+name = "orbia"
+version = "0.1.0"
+description = "A python backend which powers the AI services of LoopX"
+authors = [
+    {name = "ishaan", email = "ishaan@ishaan812.com"}
+]
+readme = "README.md"
+requires-python = ">=3.11.11,<3.14.0"
+dependencies = [
+    "fastapi>=0.115.11,<0.116.0",
+    "gunicorn>=23.0.0,<24.0.0",
+    "uvicorn>=0.34.0,<0.35.0",
+    "python-dotenv>=1.0.1,<2.0.0",
+    "pandas>=2.2.3,<3.0.0",
+    "pytest>=8.3.5,<9.0.0",
+    "python-multipart>=0.0.20,<0.0.21",
+    "redis>=5.2.1,<6.0.0",
+    "langchain-openai>=0.3.9,<0.4.0",
+    "langchain-anthropic>=0.3.0,<0.4.0",
+    "langchain-groq>=0.3.0,<0.4.0",
+    "langgraph>=0.3.18,<0.4.0",
+    "langgraph-checkpoint-postgres>=2.0.18,<3.0.0",
+    "langfuse>=2.60.0,<3.0.0",
+    "langchain>=0.3.21,<0.4.0",
+    "pillow>=11.1.0,<12.0.0",
+    "replicate>=1.0.4,<2.0.0",
+    "boto3>=1.37.16,<2.0.0",
+    "anthropic>=0.49.0,<0.50.0",
+    "langchain-community>=0.3.20,<0.4.0",
+    "python-jose>=3.4.0,<4.0.0",
+    "bs4>=0.0.2,<0.0.3",
+    "pypdf2>=3.0.1,<4.0.0",
+    "psycopg>=3.2.6,<4.0.0",
+    "google-genai>=1.7.0,<2.0.0",
+    "structlog>=25.2.0,<26.0.0",
+    "prometheus-fastapi-instrumentator>=7.1.0,<8.0.0",
+    "sqlmodel>=0.0.24,<0.0.25",
+    "pgvector>=0.4.0,<0.5.0",
+    "google-cloud>=0.34.0,<0.35.0",
+    "google>=3.0.0,<4.0.0",
+    "faiss-cpu>=1.10.0,<2.0.0",
+    "tinycss2>=1.4.0,<2.0.0",
+    "rembg>=2.0.65,<3.0.0",
+    "onnxruntime>=1.21.1,<2.0.0",
+    "openai>=1.76.2,<2.0.0",
+    "psycopg2>=2.9.10,<3.0.0",
+    "mem0ai>=0.1.101,<0.2.0",
+    "langchain-google-genai>=2.0.8,<3.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "ruff>=0.9.10",
+    "pre-commit>=4.1.0",
+]
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+
+
+[tool.ruff]
+line-length = 88
+target-version = "py38"
+
+# Enable specific rules for better FastAPI code quality
+select = [
+    "E",    # Pyflakes (general errors)
+    "F",    # Pyflakes (syntax errors)
+    "I",    # isort (import sorting)
+    "UP",   # Pyupgrade (modern syntax suggestions)
+    "B",    # flake8-bugbear (common issues)
+    "C4",   # flake8-comprehensions (optimized comprehensions)
+]
+ignore = [
+    "E501", # Line too long
+    "B904", # `assert` used
+    "F841", # Unused variable
+    "E722", # Bare `except`
+    "B008", # Do not perform function calls in argument defaults
+    "B006", # Do not use mutable data structures for argument defaults
+]
+
+# Exclude specific files/folders if needed
+exclude = ["migrations", "__pycache__"]
+
+# Enable Ruff formatter (similar to `black`)
+[tool.ruff.format]
+quote-style = "double"    # Enforces double quotes
+skip-magic-trailing-comma = false
+
+[tool.poetry.scripts]
+lint = "ruff check ."
+format = "ruff format ."
