@@ -631,6 +631,29 @@ gmpy = ["gmpy"]
 gmpy2 = ["gmpy2"]
 
 [[package]]
+name = "elevenlabs"
+version = "1.59.0"
+description = ""
+optional = false
+python-versions = "<4.0,>=3.8"
+groups = ["main"]
+files = [
+    {file = "elevenlabs-1.59.0-py3-none-any.whl", hash = "sha256:468145db81a0bc867708b4a8619699f75583e9481b395ec1339d0b443da771ed"},
+    {file = "elevenlabs-1.59.0.tar.gz", hash = "sha256:16e735bd594e86d415dd445d249c8cc28b09996cfd627fbc10102c0a84698859"},
+]
+
+[package.dependencies]
+httpx = ">=0.21.2"
+pydantic = ">=1.9.2"
+pydantic-core = ">=2.18.2,<3.0.0"
+requests = ">=2.20"
+typing_extensions = ">=4.0.0"
+websockets = ">=11.0"
+
+[package.extras]
+pyaudio = ["pyaudio (>=0.2.14)"]
+
+[[package]]
 name = "faiss-cpu"
 version = "1.11.0"
 description = "A library for efficient similarity search and clustering of dense vectors."
@@ -1708,6 +1731,22 @@ files = [
 langchain-core = ">=0.3.61,<1.0.0"
 openai = ">=1.68.2,<2.0.0"
 tiktoken = ">=0.7,<1"
+
+[[package]]
+name = "langchain-perplexity"
+version = "0.1.1"
+description = "An integration package connecting Perplexity and LangChain"
+optional = false
+python-versions = "<4.0,>=3.9"
+groups = ["main"]
+files = [
+    {file = "langchain_perplexity-0.1.1-py3-none-any.whl", hash = "sha256:e2d61b797a37f2709039ae5a05bf12eca72372f83b5aa3916e995aac92c011f1"},
+    {file = "langchain_perplexity-0.1.1.tar.gz", hash = "sha256:eb802b6c8db45e6add7562a91550cde225e4dfb0f74880a67884f64ef81e533d"},
+]
+
+[package.dependencies]
+langchain-core = ">=0.3.52,<1.0.0"
+openai = ">=1.68.2,<2.0.0"
 
 [[package]]
 name = "langchain-text-splitters"
@@ -5035,4 +5074,4 @@ dev = ["pre-commit", "ruff"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.11.11,<3.14.0"
-content-hash = "7c209a4d30cf5911c921f826be442627f7002580c1a148c11d904fdea9bb5574"
+content-hash = "9df0207edb8c2d4d1293895ef8ffdbb19c29c7918075e3ec39c3a69fe13e11ac"

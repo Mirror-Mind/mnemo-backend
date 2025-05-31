@@ -154,6 +154,12 @@ class WhatsAppTools:
             list_calendar_events,
         )
         from .integrations.google_docs import get_document_content, list_documents
+        
+        # Import the new Perplexity search tools
+        from .integrations.perplexity_search import (
+            search_person_and_generate_intro,
+            search_company_overview,
+        )
 
         return [
             list_calendar_events,
@@ -166,6 +172,8 @@ class WhatsAppTools:
             get_document_content,
             list_github_pull_requests,
             get_github_pull_request_details,
+            search_person_and_generate_intro,
+            search_company_overview,
         ]
 
     def get_all_tools(self) -> List:
