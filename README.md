@@ -7,7 +7,7 @@ This is the FASTApi repository to connect to the genai workflow and have the cop
 Clone the project
 
 ```sh
-  git clone https://github.com/nitiai/orbia.git
+  git clone https://github.com/ishaan812/orbia.git
 ```
 
 Go to the project directory

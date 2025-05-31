@@ -44,7 +44,7 @@ class WhatsAppMemoryManager:
                 "provider": "openai",
                 "config": {
                     "api_key": os.getenv("OPENAI_API_KEY"),
-                    "model": "gpt-4o-mini",
+                    "model": "gpt-o4-mini",
                 },
             },
         }

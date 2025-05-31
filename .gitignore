@@ -12,3 +12,4 @@ agents/workflows/*/*.png
 logs/image_gen
 logs/actions
 .cursor/*
+.venv/*
