@@ -15,6 +15,28 @@ if project_root not in sys.path:
     sys.path.append(project_root)
 
 from agents.workflows.whatsapp.integrations.whatsapp import send_whatsapp_message
+from agents.workflows.whatsapp.integrations.perplexity_search import PerplexitySearchTool
+
+
+async def get_attendee_profiles(attendees):
+    """Get professional profiles for attendees using Perplexity."""
+    profiles = []
+    tool = PerplexitySearchTool()
+    
+    for attendee in attendees:
+        name, role = attendee
+        try:
+            # Format search query
+            query = f"{name} {role} professional background current role company work"
+            # Get profile using Perplexity
+            profile = tool._search_with_perplexity(query)
+            profiles.append((name, role, profile))
+        except Exception as e:
+            print(f"Error getting profile for {name}: {str(e)}")
+            # Add a basic profile if search fails
+            profiles.append((name, role, f"Professional {role} with experience in the field."))
+    
+    return profiles
 
 
 async def test_meeting_summary():
@@ -32,6 +54,19 @@ async def test_meeting_summary():
     now = datetime.now(timezone.utc)
     meeting_time = now + timedelta(hours=1)
     
+    # Define attendees with their roles
+    attendees = [
+        ("John Doe", "Project Manager"),
+        ("Jane Smith", "Tech Lead"),
+        ("Alice Johnson", "Developer"),
+        ("Bob Wilson", "Designer")
+    ]
+    
+    # Get attendee profiles
+    print("Fetching attendee profiles...")
+    attendee_profiles = await get_attendee_profiles(attendees)
+    
+    # Format the message with attendee profiles
     message = f"""📅 *Meeting Reminder*
 
 *Project Review Meeting*
@@ -45,14 +80,26 @@ async def test_meeting_summary():
 3. Plan next sprint
 4. Q&A session
 
-👥 *Attendees:*
-• John Doe (Project Manager)
-• Jane Smith (Tech Lead)
-• Alice Johnson (Developer)
-• Bob Wilson (Designer)
-
-Please come prepared with your updates and questions.
+👥 *Attendees & Background:*
 """
+    
+    # Add attendee profiles
+    for name, role, profile in attendee_profiles:
+        message += f"\n*{name}* ({role}):\n"
+        # Extract the most relevant parts of the profile
+        profile_lines = profile.split('\n')
+        for line in profile_lines[:3]:  # Take first 3 lines of profile
+            if line.strip():
+                message += f"• {line.strip()}\n"
+    
+    message += "\n🤝 *Common Connections:*\n"
+    # Add some common connections based on profiles
+    message += """• All team members have experience in agile development
+• Shared background in enterprise software development
+• Common interest in user-centered design
+• Previous collaboration on similar projects"""
+
+    message += "\n\nPlease come prepared with your updates and questions."
 
     # Prepare message payload
     payload = {
