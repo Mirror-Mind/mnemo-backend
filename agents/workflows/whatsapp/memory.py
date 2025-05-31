@@ -52,6 +52,33 @@ def retry_on_db_connection_error(max_retries: int = 3, base_delay: float = 1.0):
     return decorator
 
 
+def retry_on_db_error(max_retries: int = 3, base_delay: float = 1.0):
+    """Simple retry decorator for database connection errors."""
+    def decorator(func):
+        def wrapper(*args, **kwargs):
+            for attempt in range(max_retries):
+                try:
+                    return func(*args, **kwargs)
+                except Exception as e:
+                    error_msg = str(e).lower()
+                    if any(phrase in error_msg for phrase in [
+                        "server closed the connection unexpectedly",
+                        "connection closed",
+                        "operationalerror",
+                        "role", "does not exist",
+                        "password authentication failed"
+                    ]):
+                        if attempt < max_retries - 1:
+                            delay = base_delay * (2 ** attempt)
+                            logger.warning(f"DB error, retrying in {delay}s: {str(e)}")
+                            time.sleep(delay)
+                            continue
+                    raise e
+            return None
+        return wrapper
+    return decorator
+
+
 class WhatsAppMemoryManager:
     """Memory manager for WhatsApp conversations using Mem0."""
 
@@ -59,7 +86,7 @@ class WhatsAppMemoryManager:
         """Initialize the memory manager with appropriate configuration."""
         self.memory = self._create_memory_instance()
 
-    @retry_on_db_connection_error(max_retries=5, base_delay=2.0)
+    @retry_on_db_error(max_retries=5, base_delay=2.0)
     def _create_memory_instance(self) -> Memory:
         """Create Mem0 memory instance with production-ready configuration."""
         is_production = os.getenv("NODE_ENV") == "production"
@@ -178,7 +205,7 @@ class WhatsAppMemoryManager:
 
         return Memory.from_config(config)
 
-    @retry_on_db_connection_error()
+    @retry_on_db_error()
     def search_memories(
         self, query: str, user_id: str, limit: int = 5
     ) -> List[Dict[str, Any]]:
@@ -219,7 +246,7 @@ class WhatsAppMemoryManager:
             logger.error("Error searching memories", error=str(e), user_id=user_id)
             return []
 
-    @retry_on_db_connection_error()
+    @retry_on_db_error()
     def add_memory(
         self,
         messages: List[BaseMessage],
