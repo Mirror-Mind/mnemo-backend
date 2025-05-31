@@ -23,7 +23,8 @@ class UserRepository:
     def get_user_by_phone_number(self, phone_number: str) -> Optional[User]:
         # Normalize phone number: remove first two chars if length > 10
         if phone_number and len(phone_number) > 10:
-            phone_number = phone_number[3:]
+            phone_number = phone_number[-10:]
+        print(f"Searching for user with phone number: {phone_number}")
         return self.db.query(User).filter(User.phoneNumber == phone_number).first()
 
     def get_users_with_google_token(self) -> List[User]:
