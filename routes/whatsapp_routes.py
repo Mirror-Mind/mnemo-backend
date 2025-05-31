@@ -17,6 +17,8 @@ from agents.utils.tenant_config import get_default_orchestrator
 from helpers.logger_config import logger
 from models.user_models import SessionLocal, UserThread
 from repository.user_repository import UserRepository
+import traceback
+
 
 router = APIRouter()
 
@@ -218,20 +220,40 @@ async def process_whatsapp_message_background(
             )
         else:
             error_msg = result.get("error") if result else "No response generated"
+            # Log call stack to track where this error is happening
+            logger.info("Error call stack", data={"stack": traceback.format_stack()})
             logger.error(
                 "Failed to process WhatsApp message",
                 data={"message_id": message.id, "error": error_msg},
             )
+            
+            # Check if this is a quota-related error
+            is_quota_error = False
+            user_friendly_message = "Sorry, I encountered an error processing your message. Please try again later."
+            
+            if error_msg and isinstance(error_msg, str):
+                error_lower = error_msg.lower()
+                if any(keyword in error_lower for keyword in ["quota", "rate limit", "exceeded", "429"]):
+                    is_quota_error = True
+                    user_friendly_message = "I'm currently experiencing high usage and have reached my daily limit. Please try again in a few hours. Thank you for your patience! 🙏"
+                elif "500" in error_msg:
+                    user_friendly_message = "I'm experiencing some technical difficulties. Please try again in a few minutes."
+                elif "timeout" in error_lower or "connection" in error_lower:
+                    user_friendly_message = "I'm having trouble connecting to my services. Please try again shortly."
+            
             error_response = {
                 "messaging_product": "whatsapp",
                 "to": message.from_,
                 "type": "text",
                 "text": {
-                    "body": "Sorry, I encountered an error processing your message. Please try again later."
+                    "body": user_friendly_message
                 },
             }
             await send_whatsapp_message(error_response, message.id)
-            await send_whatsapp_reaction(message.from_, message.id, "❌")
+            
+            # Use different reaction emoji for quota errors
+            reaction_emoji = "⏳" if is_quota_error else "❌"
+            await send_whatsapp_reaction(message.from_, message.id, reaction_emoji)
 
     except Exception as e:
         logger.error(
@@ -240,16 +262,31 @@ async def process_whatsapp_message_background(
         )
         # Send error message to user
         try:
+            # Determine user-friendly message based on error type
+            error_str = str(e).lower()
+            if any(keyword in error_str for keyword in ["quota", "rate limit", "exceeded", "429"]):
+                user_message = "I'm currently experiencing high usage and have reached my daily limit. Please try again in a few hours. Thank you for your patience! 🙏"
+                reaction_emoji = "⏳"
+            elif "timeout" in error_str or "connection" in error_str:
+                user_message = "I'm having trouble connecting to my services. Please try again shortly."
+                reaction_emoji = "❌"
+            elif "500" in error_str or "internal server error" in error_str:
+                user_message = "I'm experiencing some technical difficulties. Please try again in a few minutes."
+                reaction_emoji = "❌"
+            else:
+                user_message = "Sorry, I encountered an unexpected error. Please try again later."
+                reaction_emoji = "❌"
+                
             error_response = {
                 "messaging_product": "whatsapp",
                 "to": message.from_,
                 "type": "text",
                 "text": {
-                    "body": "Sorry, I encountered an unexpected error. Please try again later."
+                    "body": user_message
                 },
             }
             await send_whatsapp_message(error_response, message.id)
-            await send_whatsapp_reaction(message.from_, message.id, "❌")
+            await send_whatsapp_reaction(message.from_, message.id, reaction_emoji)
         except Exception as send_error:
             logger.error(
                 "Failed to send error message to user", data={"error": str(send_error)}

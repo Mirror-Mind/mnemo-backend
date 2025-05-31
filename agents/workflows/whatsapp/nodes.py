@@ -28,7 +28,7 @@ class WhatsAppNodes:
         self.memory_manager = WhatsAppMemoryManager()
         self.tools = WhatsAppTools(memory_manager=self.memory_manager).get_all_tools()
         self.llm_wrapper = LangChainWrapper(workflow_name=workflow_name)
-        self.model_name = "gemini/gemini-2.5-flash-preview-05-20"
+        self.model_name = "openai/gpt-4.1-mini-2025-04-14"
 
     def process_message_node(self, state) -> Dict[str, Any]:
         """Process incoming WhatsApp message and prepare for AI response."""

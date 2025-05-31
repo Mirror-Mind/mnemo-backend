@@ -92,64 +92,67 @@ class LangChainWrapper:
         workflow_name: str = "",
     ):
         self.workflow_name = workflow_name
-        self._models = {}  # Cache for model instances
+        # Add debug print to confirm new version is loaded
+        logger.info("LangChainWrapper initialized without caching mechanism")
+
+    def __getattr__(self, name):
+        """Handle backwards compatibility for removed attributes."""
+        if name == "_models":
+            logger.warning("Attempted access to removed _models cache attribute")
+            return {}  # Return empty dict for backwards compatibility
+        raise AttributeError(f"'{self.__class__.__name__}' object has no attribute '{name}'")
 
     def _get_model(self, provider: str, model_name: str, **kwargs) -> Any:
         """Get or create a model instance for the given provider."""
-        cache_key = f"{provider}:{model_name}"
-
-        if cache_key not in self._models:
-            if provider == "openai":
-                if not OPENAI_API_KEY:
-                    raise Exceptions.api_key_exception("OpenAI")
-                self._models[cache_key] = ChatOpenAI(
-                    model=model_name,
-                    api_key=OPENAI_API_KEY,
-                    temperature=kwargs.get("temperature", 0.7),
-                    **kwargs,
-                )
-            elif provider == "anthropic":
-                if not ANTHROPIC_API_KEY:
-                    raise Exceptions.api_key_exception("Anthropic")
-                self._models[cache_key] = ChatAnthropic(
-                    model=model_name,
-                    api_key=ANTHROPIC_API_KEY,
-                    temperature=kwargs.get("temperature", 0.7),
-                    **kwargs,
-                )
-            elif provider == "gemini":
-                if not GEMINI_API_KEY:
-                    raise Exceptions.api_key_exception("Gemini")
-                self._models[cache_key] = ChatGoogleGenerativeAI(
-                    model=model_name,
-                    google_api_key=GEMINI_API_KEY,
-                    temperature=kwargs.get("temperature", 0.7),
-                    **kwargs,
-                )
-            elif provider == "groq":
-                if not GROQ_API_KEY:
-                    raise Exceptions.api_key_exception("Groq")
-                self._models[cache_key] = ChatGroq(
-                    model=model_name,
-                    api_key=GROQ_API_KEY,
-                    temperature=kwargs.get("temperature", 0.7),
-                    **kwargs,
-                )
-            elif provider == "fireworks_ai":
-                if not FIREWORKS_API_KEY:
-                    raise Exceptions.api_key_exception("Fireworks")
-                self._models[cache_key] = ChatFireworks(
-                    model=model_name,
-                    api_key=FIREWORKS_API_KEY,
-                    temperature=kwargs.get("temperature", 0.7),
-                    **kwargs,
-                )
-            else:
-                raise Exceptions.general_exception(
-                    400, f"Unsupported provider: {provider}"
-                )
-
-        return self._models[cache_key]
+        if provider == "openai":
+            if not OPENAI_API_KEY:
+                raise Exceptions.api_key_exception("OpenAI")
+            return ChatOpenAI(
+                model=model_name,
+                api_key=OPENAI_API_KEY,
+                temperature=kwargs.get("temperature", 0.7),
+                **kwargs,
+            )
+        elif provider == "anthropic":
+            if not ANTHROPIC_API_KEY:
+                raise Exceptions.api_key_exception("Anthropic")
+            return ChatAnthropic(
+                model=model_name,
+                api_key=ANTHROPIC_API_KEY,
+                temperature=kwargs.get("temperature", 0.7),
+                **kwargs,
+            )
+        # elif provider == "gemini":
+        #     if not GEMINI_API_KEY:
+        #         raise Exceptions.api_key_exception("Gemini")
+        #     return ChatGoogleGenerativeAI(
+        #         model=model_name,
+        #         google_api_key=GEMINI_API_KEY,
+        #         temperature=kwargs.get("temperature", 0.7),
+        #         **kwargs,
+        #     )
+        elif provider == "groq":
+            if not GROQ_API_KEY:
+                raise Exceptions.api_key_exception("Groq")
+            return ChatGroq(
+                model=model_name,
+                api_key=GROQ_API_KEY,
+                temperature=kwargs.get("temperature", 0.7),
+                **kwargs,
+            )
+        elif provider == "fireworks_ai":
+            if not FIREWORKS_API_KEY:
+                raise Exceptions.api_key_exception("Fireworks")
+            return ChatFireworks(
+                model=model_name,
+                api_key=FIREWORKS_API_KEY,
+                temperature=kwargs.get("temperature", 0.7),
+                **kwargs,
+            )
+        else:
+            raise Exceptions.general_exception(
+                400, f"Unsupported provider: {provider}"
+            )
 
     def _convert_tools_to_langchain_format(self, tools: List) -> List:
         """Convert tools from various formats to LangChain format if needed."""

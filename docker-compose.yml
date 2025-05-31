@@ -1,10 +1,10 @@
 services:
-  orbia-backend:
+  mnemo-backend:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: orbia-backend
-    image: orbia:latest
+    container_name: mnemo-backend
+    image: mnemo-backend:latest
     ports:
       - "8090:8000"
     volumes:
@@ -18,10 +18,9 @@ services:
       - MEM0_DIR=/app/.mem0
       - TMPDIR=/tmp
       - PYTHONPATH=/app
-      - DATABASE_URL=postgresql://orbia:orbia_password@postgres:5432/orbia_db
-      - REDIS_URL=redis://redis:6379
+      - DATABASE_URL=postgresql://mnemo:mnemo_password@postgres:5432/mnemo_db
       - USE_REDIS_MEM0=true
-      - MEM0_COLLECTION_NAME=orbia_memories
+      - MEM0_COLLECTION_NAME=mnemo_memories
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/_Health"]
       interval: 30s
@@ -29,7 +28,7 @@ services:
       retries: 3
       start_period: 40s
     networks:
-      - orbia-network
+      - mnemo-network
     # Resource limits for better performance
     deploy:
       resources:
@@ -45,6 +44,6 @@ volumes:
     driver: local
       
 networks:
-  orbia-network:
+  mnemo-network:
     external: true
-    name: orbia_orbia-network 
+    name:  mnemo-frontend_mnemo-network 

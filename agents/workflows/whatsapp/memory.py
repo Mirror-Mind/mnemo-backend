@@ -1,14 +1,55 @@
 """
 Memory management utilities for WhatsApp workflow using Mem0.
+
+This module includes retry logic with exponential backoff to handle PostgreSQL
+connection drops and improve database operation reliability.
 """
 
 import os
+import time
 from typing import Any, Dict, List, Optional
 
 from langchain_core.messages import BaseMessage
 from mem0 import Memory
 
 from helpers.logger_config import logger
+
+
+def retry_on_db_connection_error(max_retries: int = 3, base_delay: float = 1.0):
+    """Decorator to retry database operations with exponential backoff."""
+    def decorator(func):
+        def wrapper(*args, **kwargs):
+            for attempt in range(max_retries):
+                try:
+                    return func(*args, **kwargs)
+                except Exception as e:
+                    error_msg = str(e).lower()
+                    # Check for database connection errors
+                    if any(error_phrase in error_msg for error_phrase in [
+                        "server closed the connection unexpectedly",
+                        "connection closed",
+                        "operationalerror",
+                        "database connection",
+                        "connection timeout"
+                    ]):
+                        if attempt < max_retries - 1:
+                            delay = base_delay * (2 ** attempt)  # Exponential backoff
+                            logger.warning(
+                                f"Database connection error on attempt {attempt + 1}/{max_retries}, retrying in {delay}s",
+                                data={"error": str(e), "delay": delay}
+                            )
+                            time.sleep(delay)
+                            continue
+                        else:
+                            logger.error(
+                                f"Database connection failed after {max_retries} attempts",
+                                data={"error": str(e)}
+                            )
+                    # Re-raise the exception if it's not a connection error or max retries reached
+                    raise e
+            return None
+        return wrapper
+    return decorator
 
 
 class WhatsAppMemoryManager:
@@ -18,6 +59,7 @@ class WhatsAppMemoryManager:
         """Initialize the memory manager with appropriate configuration."""
         self.memory = self._create_memory_instance()
 
+    @retry_on_db_connection_error(max_retries=5, base_delay=2.0)
     def _create_memory_instance(self) -> Memory:
         """Create Mem0 memory instance with production-ready configuration."""
         is_production = os.getenv("NODE_ENV") == "production"
@@ -44,7 +86,7 @@ class WhatsAppMemoryManager:
                 "provider": "openai",
                 "config": {
                     "api_key": os.getenv("OPENAI_API_KEY"),
-                    "model": "gpt-4o-mini",
+                    "model": "gpt-4.1-mini-2025-04-14",
                 },
             },
         }
@@ -73,6 +115,12 @@ class WhatsAppMemoryManager:
                             "collection_name": os.getenv(
                                 "MEM0_COLLECTION_NAME", "orbia_whatsapp_memories"
                             ),
+                            # Connection pool and timeout settings for better reliability
+                            "connect_timeout": 30,
+                            "command_timeout": 60,
+                            "server_side_cursors": True,
+                            "max_connections": 20,
+                            "min_connections": 5,
                         },
                     },
                 }
@@ -91,6 +139,12 @@ class WhatsAppMemoryManager:
                             "collection_name": os.getenv(
                                 "MEM0_COLLECTION_NAME", "orbia_whatsapp_memories"
                             ),
+                            # Connection pool and timeout settings for better reliability
+                            "connect_timeout": 30,
+                            "command_timeout": 60,
+                            "server_side_cursors": True,
+                            "max_connections": 20,
+                            "min_connections": 5,
                         },
                     },
                 }
@@ -136,6 +190,7 @@ class WhatsAppMemoryManager:
 
         return Memory.from_config(config)
 
+    @retry_on_db_connection_error()
     def search_memories(
         self, query: str, user_id: str, limit: int = 5
     ) -> List[Dict[str, Any]]:
@@ -176,6 +231,7 @@ class WhatsAppMemoryManager:
             logger.error("Error searching memories", error=str(e), user_id=user_id)
             return []
 
+    @retry_on_db_connection_error()
     def add_memory(
         self,
         messages: List[BaseMessage],
@@ -216,6 +272,7 @@ class WhatsAppMemoryManager:
             logger.error("Error adding memories", error=str(e), user_id=user_id)
             return False
 
+    @retry_on_db_connection_error()
     def add_single_memory(
         self, content: str, user_id: str, metadata: Optional[Dict[str, Any]] = None
     ) -> bool:
@@ -243,6 +300,7 @@ class WhatsAppMemoryManager:
             logger.error("Error adding single memory", error=str(e), user_id=user_id)
             return False
 
+    @retry_on_db_connection_error()
     def get_all_memories(self, user_id: str, limit: int = 10) -> List[Dict[str, Any]]:
         """Get all memories for a user."""
         try:
@@ -339,6 +397,7 @@ class WhatsAppMemoryManager:
 
         return all_memories[:limit]  # Return up to the requested limit
 
+    @retry_on_db_connection_error()
     def delete_memory(self, memory_id: str, user_id: str) -> bool:
         """Delete a specific memory."""
         try:
@@ -352,6 +411,7 @@ class WhatsAppMemoryManager:
             logger.error("Error deleting memory", error=str(e))
             return False
 
+    @retry_on_db_connection_error()
     def update_memory(self, memory_id: str, new_content: str, user_id: str) -> bool:
         """Update an existing memory."""
         try:
