@@ -115,12 +115,6 @@ class WhatsAppMemoryManager:
                             "collection_name": os.getenv(
                                 "MEM0_COLLECTION_NAME", "orbia_whatsapp_memories"
                             ),
-                            # Connection pool and timeout settings for better reliability
-                            "connect_timeout": 30,
-                            "command_timeout": 60,
-                            "server_side_cursors": True,
-                            "max_connections": 20,
-                            "min_connections": 5,
                         },
                     },
                 }
@@ -135,16 +129,10 @@ class WhatsAppMemoryManager:
                             "password": os.getenv("POSTGRES_PASSWORD", "postgres"),
                             "host": os.getenv("POSTGRES_HOST", "localhost"),
                             "port": os.getenv("POSTGRES_PORT", "5432"),
-                            "dbname": os.getenv("POSTGRES_DB", "whatsapp_bot"),
+                            "dbname": os.getenv("POSTGRES_DB", "mnemo_db"),
                             "collection_name": os.getenv(
                                 "MEM0_COLLECTION_NAME", "orbia_whatsapp_memories"
                             ),
-                            # Connection pool and timeout settings for better reliability
-                            "connect_timeout": 30,
-                            "command_timeout": 60,
-                            "server_side_cursors": True,
-                            "max_connections": 20,
-                            "min_connections": 5,
                         },
                     },
                 }
