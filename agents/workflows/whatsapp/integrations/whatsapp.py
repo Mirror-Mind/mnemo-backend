@@ -43,10 +43,36 @@ async def send_whatsapp_message(message_payload: Dict[str, Any]) -> bool:
         }
         
         # Add messaging product to payload
-        payload = {
+        # Check if the message is text and needs to be chunked
+        if (
+            message_payload.get("type") == "text"
+            and "text" in message_payload
+            and isinstance(message_payload["text"], dict)
+            and "body" in message_payload["text"]
+            and isinstance(message_payload["text"]["body"], str)
+            and len(message_payload["text"]["body"]) > 3800
+        ):
+            text_body = message_payload["text"]["body"]
+            chunks = [text_body[i:i+3800] for i in range(0, len(text_body), 3800)]
+            success = True
+            for chunk in chunks:
+                chunk_payload = {
+                    "messaging_product": "whatsapp",
+                    **{**message_payload, "text": {"body": chunk}}
+                }
+                response = requests.post(url, headers=headers, json=chunk_payload)
+                if not response.ok:
+                    logger.error(
+                    f"Failed to send WhatsApp message chunk: {response.status_code} - {response.text}",
+                    data={"payload": chunk_payload}
+                    )
+                    success = False
+            return success
+        else:
+            payload = {
             "messaging_product": "whatsapp",
             **message_payload
-        }
+            }
 
         # Send the request
         response = requests.post(url, headers=headers, json=payload)

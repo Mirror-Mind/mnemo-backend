@@ -52,7 +52,9 @@ Focus on:
 4. Any notable achievements or expertise
 5. Professional interests or specializations
 
-Keep the response factual, concise, and professional. If the person is not found or information is limited, say so clearly."""
+Keep the response factual, concise, and professional. If the person is not found or information is limited, say so clearly.
+In no more than 3000 charecters, provide a detailed summary that can be used for professional introductions or networking purposes.
+Keep the 3000 character limit in mind while providing the overview."""
 
             response = self.perplexity.invoke(prompt)
             return response.content

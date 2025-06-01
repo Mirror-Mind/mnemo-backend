@@ -12,6 +12,7 @@ from repository.user_repository import UserRepository
 from .google_calendar import google_calendar
 from .whatsapp import send_whatsapp_message
 from .perplexity_search import PerplexitySearchTool
+from ..memory import WhatsAppMemoryManager
 
 
 class MeetingReminder:
@@ -21,8 +22,35 @@ class MeetingReminder:
         """Initialize meeting reminder integration."""
         self.reminder_minutes = 15  # Send reminder 15 minutes before meeting
         self.perplexity_tool = PerplexitySearchTool()
+        self.memory_manager = WhatsAppMemoryManager()
 
-    def _format_meeting_summary(self, event: Dict[str, Any]) -> str:
+    def _get_user_context(self, user_id: str) -> str:
+        """Get user's professional context from memories."""
+        try:
+            # Search for professional context in memories
+            professional_queries = [
+                "work job role company profession career",
+                "skills expertise experience background",
+                "industry business interests projects"
+            ]
+
+            all_memories = []
+            for query in professional_queries:
+                memories = self.memory_manager.search_memories(query, user_id, limit=3)
+                if memories:
+                    for memory in memories:
+                        memory_text = memory.get("memory", str(memory))
+                        if memory_text not in all_memories:
+                            all_memories.append(memory_text)
+
+            if all_memories:
+                return "\n".join(all_memories[:5])  # Limit to top 5 memories
+            return ""
+        except Exception as e:
+            logger.error(f"Error retrieving user context: {str(e)}")
+            return ""
+
+    def _format_meeting_summary(self, event: Dict[str, Any], user_id: str) -> str:
         """Format meeting summary for WhatsApp message."""
         try:
             # Extract event details
@@ -35,6 +63,9 @@ class MeetingReminder:
                 event["end"]["dateTime"].replace("Z", "+00:00")
             )
             attendees = event.get("attendees", [])
+
+            # Get user's context from memories
+            user_context = self._get_user_context(user_id)
 
             # Format the message
             message = f"""📅 *Meeting Reminder*
@@ -49,7 +80,7 @@ class MeetingReminder:
 
 👥 *Attendees:*
 """
-            # Add attendees with their profiles
+            # Add attendees with their profiles and potential connection points
             for i, attendee in enumerate(attendees[:5]):  # Only process top 5 attendees
                 name = attendee.get("displayName", attendee.get("email", "Unknown"))
                 message += f"• {name}\n"
@@ -61,7 +92,29 @@ class MeetingReminder:
                     )
                     # Add a brief profile summary (first 2-3 sentences)
                     profile_summary = " ".join(profile.split(". ")[:2]) + "."
-                    message += f"  _Profile:_ {profile_summary}\n\n"
+                    message += f"  _Profile:_ {profile_summary}\n"
+
+                    # Generate personalized connection points if user context exists
+                    if user_context:
+                        try:
+                            connection_prompt = f"""Based on the following information, suggest specific connection points or ice breakers:
+
+YOUR BACKGROUND:
+{user_context}
+
+PERSON TO CONNECT WITH:
+{profile}
+
+Please provide 1-2 specific connection points or conversation starters that could help establish rapport."""
+
+                            connection_points = self.perplexity_tool._search_with_perplexity(connection_prompt)
+                            message += f"  _Connection Points:_ {connection_points}\n\n"
+                        except Exception as e:
+                            logger.error(f"Error generating connection points: {str(e)}")
+                            message += "\n"
+                    else:
+                        message += "\n"
+
                 except Exception as e:
                     logger.error(f"Error getting profile for {name}: {str(e)}")
                     message += "  _Profile:_ Unable to fetch profile information\n\n"
@@ -111,7 +164,7 @@ class MeetingReminder:
                         minutes=self.reminder_minutes + 1
                     ):
                         # Format and send reminder
-                        message = self._format_meeting_summary(event)
+                        message = self._format_meeting_summary(event, user_id)
                         await send_whatsapp_message(
                             {
                                 "to": user.phoneNumber,

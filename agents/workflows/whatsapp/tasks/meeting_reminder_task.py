@@ -66,7 +66,7 @@ class MeetingReminderTask:
                         start_time = datetime.fromisoformat(event["start"]["dateTime"].replace("Z", "+00:00"))
                         time_until_meeting = start_time - datetime.now(start_time.tzinfo)
                         if timedelta(minutes=0) <= time_until_meeting <= timedelta(minutes=30):
-                            message = meeting_reminder._format_meeting_summary(event)
+                            message = meeting_reminder._format_meeting_summary(event, user_id)
                             # message += f"\n\n🟢 *Server Start Time:* {self.server_start_time}"
                             await send_whatsapp_message({
                                 "to": os.getenv("TEST_WHATSAPP_NUMBER"),
