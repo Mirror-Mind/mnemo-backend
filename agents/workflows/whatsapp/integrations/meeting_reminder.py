@@ -36,7 +36,7 @@ class MeetingReminder:
 
             all_memories = []
             for query in professional_queries:
-                memories = self.memory_manager.search_memories(query, user_id, limit=3)
+                memories = self.memory_manager.search_memories(query, user_id, limit=8)
                 if memories:
                     for memory in memories:
                         memory_text = memory.get("memory", str(memory))
@@ -44,7 +44,7 @@ class MeetingReminder:
                             all_memories.append(memory_text)
 
             if all_memories:
-                return "\n".join(all_memories[:5])  # Limit to top 5 memories
+                return "\n".join(all_memories[:8])  # Limit to top 5 memories
             return ""
         except Exception as e:
             logger.error(f"Error retrieving user context: {str(e)}")
