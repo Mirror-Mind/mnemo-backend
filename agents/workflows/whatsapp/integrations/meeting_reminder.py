@@ -11,6 +11,7 @@ from models.user_models import SessionLocal
 from repository.user_repository import UserRepository
 from .google_calendar import google_calendar
 from .whatsapp import send_whatsapp_message
+from .perplexity_search import PerplexitySearchTool
 
 
 class MeetingReminder:
@@ -19,6 +20,7 @@ class MeetingReminder:
     def __init__(self):
         """Initialize meeting reminder integration."""
         self.reminder_minutes = 15  # Send reminder 15 minutes before meeting
+        self.perplexity_tool = PerplexitySearchTool()
 
     def _format_meeting_summary(self, event: Dict[str, Any]) -> str:
         """Format meeting summary for WhatsApp message."""
@@ -47,10 +49,25 @@ class MeetingReminder:
 
 👥 *Attendees:*
 """
-            # Add attendees
-            for attendee in attendees:
+            # Add attendees with their profiles
+            for i, attendee in enumerate(attendees[:5]):  # Only process top 5 attendees
                 name = attendee.get("displayName", attendee.get("email", "Unknown"))
                 message += f"• {name}\n"
+                
+                # Get attendee profile using Perplexity
+                try:
+                    profile = self.perplexity_tool._search_with_perplexity(
+                        self.perplexity_tool._format_search_query(name)
+                    )
+                    # Add a brief profile summary (first 2-3 sentences)
+                    profile_summary = " ".join(profile.split(". ")[:2]) + "."
+                    message += f"  _Profile:_ {profile_summary}\n\n"
+                except Exception as e:
+                    logger.error(f"Error getting profile for {name}: {str(e)}")
+                    message += "  _Profile:_ Unable to fetch profile information\n\n"
+
+            if len(attendees) > 5:
+                message += f"\n... and {len(attendees) - 5} more attendees"
 
             return message
 
