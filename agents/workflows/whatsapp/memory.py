@@ -54,10 +54,73 @@ def retry_on_db_connection_error(max_retries: int = 3, base_delay: float = 1.0):
 
 class WhatsAppMemoryManager:
     """Memory manager for WhatsApp conversations using Mem0."""
+    
+    _instance = None
+    
+    def __new__(cls):
+        """Implement singleton pattern."""
+        if cls._instance is None:
+            cls._instance = super(WhatsAppMemoryManager, cls).__new__(cls)
+            cls._instance._initialized = False
+        return cls._instance
 
     def __init__(self):
         """Initialize the memory manager with appropriate configuration."""
+        if self._initialized:
+            return
+            
         self.memory = self._create_memory_instance()
+        self._initialized = True
+        
+        # Add mock memory for deeptech startup founder
+        self._add_mock_memory()
+
+    def _add_mock_memory(self):
+        """Add mock memory for a deeptech startup founder."""
+        try:
+            mock_memory = {
+                "content": """Professional Profile: DeepTech Startup Founder
+Role: Founder & CTO at SkyTech Innovations
+Background: 
+- Founded SkyTech Innovations in 2022, focusing on autonomous drone systems and embedded hardware solutions
+- Previously led R&D at a major aerospace company for 5 years
+- PhD in Robotics and Computer Vision from MIT
+- Expert in embedded systems, computer vision, and drone autonomy
+
+Technical Expertise:
+- Embedded Systems: ARM Cortex-M series, RTOS, bare-metal programming
+- Hardware: PCB design, FPGA development, sensor integration
+- Software: C/C++, Python, ROS, computer vision algorithms
+- Drones: Flight control systems, autonomous navigation, swarm robotics
+
+Current Projects:
+- Developing next-gen autonomous delivery drones with advanced obstacle avoidance
+- Building embedded AI chips for edge computing in drones
+- Working on swarm robotics for industrial inspection
+
+Interests:
+- Edge AI and embedded machine learning
+- Hardware acceleration for AI workloads
+- Sustainable drone technology
+- Open source hardware and software
+- Robotics competitions and hackathons""",
+                "metadata": {
+                    "type": "professional_profile",
+                    "source": "mock_data",
+                    "timestamp": "2024-03-20T00:00:00Z"
+                }
+            }
+            
+            # Add to memory with a test user ID
+            self.add_single_memory(
+                mock_memory["content"],
+                "test_user_123",
+                mock_memory["metadata"]
+            )
+            logger.info("Successfully added mock memory for deeptech founder")
+            
+        except Exception as e:
+            logger.error("Error adding mock memory", error=str(e))
 
     @retry_on_db_connection_error(max_retries=5, base_delay=2.0)
     def _create_memory_instance(self) -> Memory:

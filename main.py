@@ -1,3 +1,7 @@
+"""
+Main FastAPI application file.
+"""
+
 import os
 import time
 import warnings
@@ -10,6 +14,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from agents.postgres import get_checkpointer
+from agents.workflows.whatsapp.tasks.meeting_reminder_task import meeting_reminder_task
 from helpers.index import convert_seconds_to_hms
 from middleware.logging_middlewares import (
     LoggingMiddleware,
@@ -61,10 +66,17 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         print(f"ERROR: Failed to initialize checkpointer at startup: {e}")
 
+    # Start the meeting reminder task
+    print("INFO: Starting meeting reminder task...")
+    meeting_reminder_task.start()
+    print("INFO: Meeting reminder task started successfully.")
+
     yield
 
     # Shutdown
     print("INFO: Application shutting down...")
+    meeting_reminder_task.stop()
+    print("INFO: Meeting reminder task stopped.")
 
 
 # FastAPI app configuration

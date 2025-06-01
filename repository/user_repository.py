@@ -1,7 +1,7 @@
 import os
 import uuid
 from datetime import datetime, timezone
-from typing import Optional
+from typing import List, Optional
 
 import requests
 from sqlalchemy.orm import Session
@@ -21,7 +21,30 @@ class UserRepository:
         return self.db.query(User).filter(User.email == email).first()
 
     def get_user_by_phone_number(self, phone_number: str) -> Optional[User]:
+        # Normalize phone number: remove first two chars if length > 10
+        if phone_number and len(phone_number) > 10:
+            phone_number = phone_number[-10:]
+        print(f"Searching for user with phone number: {phone_number}")
         return self.db.query(User).filter(User.phoneNumber == phone_number).first()
+
+    def get_users_with_google_token(self) -> List[User]:
+        """Get all users who have a valid Google access token."""
+        try:
+            # Join User and Account tables to get users with Google accounts
+            users = (
+                self.db.query(User)
+                .join(Account)
+                .filter(
+                    Account.providerId == "google",
+                    Account.accessToken.isnot(None),
+                    User.phoneNumber.isnot(None),  # Only get users with phone numbers
+                )
+                .all()
+            )
+            return users
+        except Exception as e:
+            logger.error(f"Error getting users with Google token: {str(e)}")
+            return []
 
     def get_google_access_token(self, user_id: str) -> Optional[str]:
         account = (
