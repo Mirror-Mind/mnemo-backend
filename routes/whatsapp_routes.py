@@ -208,8 +208,23 @@ async def process_whatsapp_message_background(
             },
             **initial_state,
         )
+        
+        # Debug logging to understand result structure
+        logger.debug(
+            "Workflow result received",
+            data={
+                "user_id": user_id,
+                "has_result": bool(result),
+                "has_response_content": bool(result and result.get("response_content")),
+                "error_value": result.get("error") if result else None,
+                "error_type": type(result.get("error")) if result and result.get("error") is not None else None,
+            }
+        )
         # Format response for WhatsApp
-        if result and result.get("response_content") and not result.get("error"):
+        if (result and 
+            result.get("response_content") and 
+            (result.get("error") is None or result.get("error") == "")):
+            # Success: we have response_content and no error (or error is None/empty)
             whatsapp_response = result.get("response_content")
             whatsapp_response["to"] = message.from_
             await send_whatsapp_message(whatsapp_response, message.id)

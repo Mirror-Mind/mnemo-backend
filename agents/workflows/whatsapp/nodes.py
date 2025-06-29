@@ -59,7 +59,11 @@ class WhatsAppNodes:
                         result.get("memory", str(result)) for result in memory_results
                     ]
                     memory_context = "\n".join(relevant_memories)
-            updated_state = {"memory_context": memory_context, "is_processing": True}
+            updated_state = {
+                "memory_context": memory_context, 
+                "is_processing": True,
+                "error": None,  # Clear any previous errors on successful processing
+            }
             logger.info(
                 "Message processed successfully",
                 data={"user_id": user_id, "has_memory_context": bool(memory_context)},
@@ -144,6 +148,7 @@ class WhatsAppNodes:
                 "response_type": response_type,
                 "response_content": parsed_response,
                 "is_processing": False,
+                "error": None,  # Clear any previous errors on successful response
             }
             logger.info(
                 "AI response generated successfully",
