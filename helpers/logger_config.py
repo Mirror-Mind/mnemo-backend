@@ -32,6 +32,54 @@ LOG_LEVEL_MAP = {
 ACTUAL_LOG_LEVEL = LOG_LEVEL_MAP.get(LOG_LEVEL, logging.INFO)
 
 
+def safe_json_serialize(obj):
+    """Safely serialize objects to JSON, handling complex objects."""
+    try:
+        # Try direct serialization first
+        return json.dumps(obj)
+    except (TypeError, ValueError):
+        # Handle complex objects that can't be directly serialized
+        if hasattr(obj, '__dict__'):
+            # For objects with __dict__, convert to dict representation
+            try:
+                return json.dumps({
+                    'type': obj.__class__.__name__,
+                    'content': str(obj) if hasattr(obj, '__str__') else repr(obj)
+                })
+            except:
+                return json.dumps({'type': obj.__class__.__name__, 'repr': repr(obj)})
+        elif isinstance(obj, (list, tuple)):
+            # Handle lists/tuples that might contain complex objects
+            try:
+                return json.dumps([safe_json_serialize_item(item) for item in obj])
+            except:
+                return json.dumps([str(item) for item in obj])
+        elif isinstance(obj, dict):
+            # Handle dictionaries that might contain complex objects
+            try:
+                return json.dumps({k: safe_json_serialize_item(v) for k, v in obj.items()})
+            except:
+                return json.dumps({k: str(v) for k, v in obj.items()})
+        else:
+            # Fallback to string representation
+            return json.dumps(str(obj))
+
+
+def safe_json_serialize_item(item):
+    """Helper function to serialize individual items."""
+    try:
+        json.dumps(item)  # Test if it's serializable
+        return item
+    except (TypeError, ValueError):
+        if hasattr(item, '__dict__'):
+            return {
+                'type': item.__class__.__name__,
+                'content': str(item) if hasattr(item, '__str__') else repr(item)
+            }
+        else:
+            return str(item)
+
+
 def log_json(
     msg,
     data=None,
@@ -54,7 +102,7 @@ def log_json(
             parts.append(f"status={status_code}")
 
         if data:
-            parts.append(f"data={json.dumps(data)}")
+            parts.append(f"data={safe_json_serialize(data)}")
 
         if include_traceback:
             tb = traceback.format_exc()
@@ -153,7 +201,7 @@ class CustomLogger(logging.Logger):
         if CONCISE_LOGGING:
             super().debug(log_output, *args, **kwargs)
         else:
-            super().debug(json.dumps(log_output), *args, **kwargs)
+            super().debug(safe_json_serialize(log_output), *args, **kwargs)
 
     def info(self, msg, *args, **kwargs):
         # Extract custom kwargs before passing to parent
@@ -179,7 +227,7 @@ class CustomLogger(logging.Logger):
         if CONCISE_LOGGING:
             super().info(log_output, *args, **kwargs)
         else:
-            super().info(json.dumps(log_output), *args, **kwargs)
+            super().info(safe_json_serialize(log_output), *args, **kwargs)
 
     def error(self, msg, *args, **kwargs):
         # Extract custom kwargs before passing to parent
@@ -206,7 +254,7 @@ class CustomLogger(logging.Logger):
         if CONCISE_LOGGING:
             super().error(log_output, *args, **kwargs)
         else:
-            super().error(json.dumps(log_output), *args, **kwargs)
+            super().error(safe_json_serialize(log_output), *args, **kwargs)
 
     def warning(self, msg, *args, **kwargs):
         # Extract custom kwargs before passing to parent
@@ -230,7 +278,7 @@ class CustomLogger(logging.Logger):
         if CONCISE_LOGGING:
             super().warning(log_output, *args, **kwargs)
         else:
-            super().warning(json.dumps(log_output), *args, **kwargs)
+            super().warning(safe_json_serialize(log_output), *args, **kwargs)
 
     def exception(
         self,
@@ -252,7 +300,7 @@ class CustomLogger(logging.Logger):
                 user_id=user_id,
                 include_traceback=include_traceback,
             )
-            super().exception(json.dumps(msg_info), *args, **kwargs)
+            super().exception(safe_json_serialize(msg_info), *args, **kwargs)
         except Exception as e:
             msg_info = f"Error logging exception: {str(e)}"
             super().exception(msg_info, *args, **kwargs)
