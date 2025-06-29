@@ -220,11 +220,10 @@ async def process_whatsapp_message_background(
             )
         else:
             error_msg = result.get("error") if result else "No response generated"
-            # Log call stack to track where this error is happening
-            logger.info("Error call stack", data={"stack": traceback.format_stack()})
+            # Log the actual error instead of call stack
             logger.error(
                 "Failed to process WhatsApp message",
-                data={"message_id": message.id, "error": error_msg},
+                data={"message_id": message.id, "error": error_msg, "result": result},
             )
             
             # Check if this is a quota-related error
